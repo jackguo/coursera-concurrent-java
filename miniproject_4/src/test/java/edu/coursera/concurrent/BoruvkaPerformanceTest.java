@@ -112,6 +112,7 @@ public class BoruvkaPerformanceTest extends TestCase {
         final double speedup = (double)seqResults.elapsedTime / (double)parResults.elapsedTime;
         assertTrue(String.format("Expected speedup of at least %fx, but was %fx", expectedSpeedup, speedup),
                 speedup >= expectedSpeedup);
+        //assertEquals(0, speedup);
     }
 
     public void testInputUSAroadNE() throws IOException, InterruptedException {
@@ -123,5 +124,6 @@ public class BoruvkaPerformanceTest extends TestCase {
         final double speedup = (double)seqResults.elapsedTime / (double)parResults.elapsedTime;
         assertTrue(String.format("Expected speedup of at least %fx, but was %fx", expectedSpeedup, speedup),
                 speedup >= expectedSpeedup);
+        //assertEquals(0, speedup);
     }
 }

@@ -30,36 +30,20 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
     @Override
     public void computeBoruvka(final Queue<ParComponent> nodesLoaded,
             final SolutionToBoruvka<ParComponent> solution) {
-        for (ParComponent node = nodesLoaded.poll();
-             node != null; node = nodesLoaded.poll()) {
-            try {
-                if (node.lock.tryLock()) {
-                    if (!node.isDead) {
-                        Edge<ParComponent> edge = node.getMinEdge();
-                        if (edge == null) {
-                            solution.setSolution(node);
-                            break;
-                        }
-                        ParComponent other = edge.getOther(node);
-                        //if (node.nodeId > other.nodeId) {
-                            try {
-                                if (other.lock.tryLock() && !other.isDead) {
-                                    other.isDead = true;
-                                    node.merge(other, edge.weight());
-                                }
-                                nodesLoaded.offer(node);
-                            } finally {
-                                if (other.lock.isHeldByCurrentThread()) {
-                                    other.lock.unlock();
-                                }
-                            }
-                        //}
-                    }
+        ParComponent node;
+        while ((node = nodesLoaded.poll()) != null) {
+            if (node.isDead.compareAndSet(false, true)) {
+                Edge<ParComponent> edge = node.getMinEdge();
+                if (edge == null) {
+                    solution.setSolution(node);
+                    break;
                 }
-            } finally {
-                if (node.lock.isHeldByCurrentThread()) {
-                    node.lock.unlock();
+                ParComponent other = edge.getOther(node);
+                if (other.isDead.compareAndSet(false, true)) {
+                    node.merge(other, edge.weight());
                 }
+                node.isDead.set(false);
+                nodesLoaded.add(node);
             }
         }
     }
@@ -75,8 +59,6 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
          *  it.
          */
         public final int nodeId;
-
-        public final ReentrantLock lock = new ReentrantLock();
 
         /**
          * List of edges attached to this component, sorted by weight from least
@@ -100,7 +82,7 @@ public final class ParBoruvka extends AbstractBoruvka<ParBoruvka.ParComponent> {
          * Whether this component has already been collapsed into another
          * component.
          */
-        public boolean isDead = false;
+        public AtomicBoolean isDead = new AtomicBoolean(false);
 
         /**
          * Constructor.
