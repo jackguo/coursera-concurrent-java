@@ -53,25 +53,13 @@ public class BoruvkaPerformanceTest extends TestCase {
         long minElapsed = 0;
         for (int r = 0; r < 5; r++) {
             final Queue<C> nodesLoaded;
-            int cores = getNCores();
-            Queue<C>[] queues = new LinkedList[cores];
             if (boruvkaImpl instanceof SeqBoruvka) {
                 nodesLoaded = new LinkedList<>();
             } else {
                 nodesLoaded = new ConcurrentLinkedQueue<>();
-                for (int i = 0; i < cores; ++i) {
-                    queues[i] = new LinkedList<>();
-                }
             }
             final SolutionToBoruvka solution = new SolutionToBoruvka();
             Loader.read(fileName, factory, nodesLoaded);
-
-            if (boruvkaImpl instanceof ParBoruvka) {
-                int minQueueSize = nodesLoaded.size() / cores;
-                for (int i = 0; !nodesLoaded.isEmpty(); ++i) {
-                    queues[Math.min(cores - 1, i / minQueueSize)].offer(nodesLoaded.poll());
-                }
-            }
 
             final long start;
             if (boruvkaImpl instanceof SeqBoruvka) {
@@ -80,9 +68,8 @@ public class BoruvkaPerformanceTest extends TestCase {
             } else {
                 final Thread[] threads = new Thread[getNCores()];
                 for (int i = 0; i < threads.length; i++) {
-                    int index = i;
                     threads[i] = new Thread(() -> {
-                        boruvkaImpl.computeBoruvka(queues[index], solution);
+                        boruvkaImpl.computeBoruvka(nodesLoaded, solution);
                     });
                 }
 
@@ -117,6 +104,7 @@ public class BoruvkaPerformanceTest extends TestCase {
     }
 
     public void testInputUSAroadFLA() throws IOException, InterruptedException {
+        System.err.println("Cores used: " + getNCores());
         final ExperimentResults seqResults = driver(inputs[0], new SeqBoruvkaFactory(), new SeqBoruvka());
         final ExperimentResults parResults = driver(inputs[0], new ParBoruvkaFactory(),
                 new ParBoruvka());
@@ -130,6 +118,7 @@ public class BoruvkaPerformanceTest extends TestCase {
     }
 
     public void testInputUSAroadNE() throws IOException, InterruptedException {
+        System.err.println("Cores used: " + getNCores());
         final ExperimentResults seqResults = driver(inputs[1], new SeqBoruvkaFactory(), new SeqBoruvka());
         final ExperimentResults parResults = driver(inputs[1], new ParBoruvkaFactory(),
                 new ParBoruvka());
@@ -138,7 +127,7 @@ public class BoruvkaPerformanceTest extends TestCase {
         final double speedup = (double)seqResults.elapsedTime / (double)parResults.elapsedTime;
         assertTrue(String.format("Expected speedup of at least %fx, but was %fx", expectedSpeedup, speedup),
                 speedup >= expectedSpeedup);
-        System.err.println("Speed up for NE: " + speedup);
+        System.err.println("Speedup for NE: " + speedup);
         //assertEquals(0, speedup);
     }
 }
