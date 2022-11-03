@@ -67,8 +67,9 @@ public class BoruvkaPerformanceTest extends TestCase {
             Loader.read(fileName, factory, nodesLoaded);
 
             if (boruvkaImpl instanceof ParBoruvka) {
+                int minQueueSize = nodesLoaded.size() / cores;
                 for (int i = 0; !nodesLoaded.isEmpty(); ++i) {
-                    queues[i % cores].offer(nodesLoaded.poll());
+                    queues[Math.min(cores - 1, i / minQueueSize)].offer(nodesLoaded.poll());
                 }
             }
 
