@@ -53,13 +53,24 @@ public class BoruvkaPerformanceTest extends TestCase {
         long minElapsed = 0;
         for (int r = 0; r < 5; r++) {
             final Queue<C> nodesLoaded;
+            int cores = getNCores();
+            Queue<C>[] queues = new LinkedList[cores];
             if (boruvkaImpl instanceof SeqBoruvka) {
                 nodesLoaded = new LinkedList<>();
             } else {
                 nodesLoaded = new ConcurrentLinkedQueue<>();
+                for (int i = 0; i < cores; ++i) {
+                    queues[i] = new LinkedList<>();
+                }
             }
             final SolutionToBoruvka solution = new SolutionToBoruvka();
             Loader.read(fileName, factory, nodesLoaded);
+
+            if (boruvkaImpl instanceof ParBoruvka) {
+                for (int i = 0; !nodesLoaded.isEmpty(); ++i) {
+                    queues[i % cores].offer(nodesLoaded.poll());
+                }
+            }
 
             final long start;
             if (boruvkaImpl instanceof SeqBoruvka) {
@@ -68,8 +79,9 @@ public class BoruvkaPerformanceTest extends TestCase {
             } else {
                 final Thread[] threads = new Thread[getNCores()];
                 for (int i = 0; i < threads.length; i++) {
+                    int index = i;
                     threads[i] = new Thread(() -> {
-                        boruvkaImpl.computeBoruvka(nodesLoaded, solution);
+                        boruvkaImpl.computeBoruvka(queues[index], solution);
                     });
                 }
 
