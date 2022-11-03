@@ -125,6 +125,7 @@ public class BoruvkaPerformanceTest extends TestCase {
         final double speedup = (double)seqResults.elapsedTime / (double)parResults.elapsedTime;
         assertTrue(String.format("Expected speedup of at least %fx, but was %fx", expectedSpeedup, speedup),
                 speedup >= expectedSpeedup);
+        System.err.println("Speed up for FLA: " + speedup);
         //assertEquals(0, speedup);
     }
 
@@ -137,6 +138,7 @@ public class BoruvkaPerformanceTest extends TestCase {
         final double speedup = (double)seqResults.elapsedTime / (double)parResults.elapsedTime;
         assertTrue(String.format("Expected speedup of at least %fx, but was %fx", expectedSpeedup, speedup),
                 speedup >= expectedSpeedup);
+        System.err.println("Speed up for NE: " + speedup);
         //assertEquals(0, speedup);
     }
 }
