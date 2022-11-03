@@ -215,11 +215,8 @@ public final class CoarseLists {
         boolean contains(final Integer object) {
             rwLock.readLock().lock();
             try {
-                Entry pred = this.head;
-                Entry curr = pred.next;
-
+                Entry curr = this.head.next;
                 while (curr.object.compareTo(object) < 0) {
-                    pred = curr;
                     curr = curr.next;
                 }
                 return object.equals(curr.object);
